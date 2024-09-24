@@ -1,7 +1,7 @@
 """ Main UI Module """
 import time
 from enum import Enum
-from typing import Union, Callable, List
+from typing import Union, Callable, List, Dict, Any
 from threading import Thread
 from queue import Queue
 
@@ -50,29 +50,28 @@ class TerminalUILite:
             print(line)
         while True:
             if not queue.empty():
-                content = queue.get()
+                content: Dict[str, Any] = queue.get()
                 message_as_input = None
-                if isinstance(content, list) and len(content) == 0:
+                if content.get('content') is None:
                     self.__adjustable_lines = []
                     for _ in range(self.__adjustable_length):
                         print("\033[A\033[K", end="")
                     self.__adjustable_length = 0
 
                 else:
-                    self.__adjustable_lines.append(content)
+                    self.__adjustable_lines.append(content["content"])
                     for _ in range(self.__adjustable_length):
                         print("\033[A\033[K", end="")
-                    if self.__request_callback:
+                    if content["callback"]:
                         message_as_input = self.__adjustable_lines.pop(-1)
                     self.__adjustable_length = len(self.__adjustable_lines)
 
                 for line in self.__adjustable_lines:
                     print(line)
-                if self.__request_callback:
+                if content.get("callback") is not None:
                     data = self.__input_handler(
                         prompt=message_as_input, timeout=self.__input_timeout)
-                    self.__request_callback(data)
-                    self.__request_callback = None
+                    content["callback"](data)
                     self.__adjustable_length += 1
 
                     for _ in range(self.__adjustable_length):
@@ -98,11 +97,31 @@ class TerminalUILite:
         """
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
-        self.__queue.put(content)
-        if callback_function:
-            self.__request_callback = callback_function
-            self.__input_timeout = input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS
+        if '\n' in content:
+            # Replace any return carriages first, if any
+            content = content.replace('\r', '')
+            split_content = content.split('\n')
+            sep_lines = []
+            for spl in split_content:
+                queue_able = {
+                    "content": spl,
+                    "callback": None,
+                    "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS
+                }
+                sep_lines.append(queue_able.copy())
+            if callback_function:
+                sep_lines[-1]["callback"] = callback_function
+            for line in sep_lines:
+                self.__queue.put(line)
+
+        else:
+            queue_able = {
+                "content": content,
+                "callback": callback_function,
+                "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS
+            }
+            self.__queue.put(queue_able)
 
     def clear_content(self) -> None:
         """ Clears the non-base content """
-        self.__queue.put([])
+        self.__queue.put({})

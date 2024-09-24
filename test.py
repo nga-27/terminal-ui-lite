@@ -14,6 +14,9 @@ class TestCallback:
             time.sleep(0.1)
         return self.data
     
+    def clear_data(self):
+        self.data = None
+    
     def print_data(self):
         print(self.data)
 
@@ -29,11 +32,19 @@ def test():
     for i in range(3):
         ui_manager.add_content(f"Hello World {i+1}", text_color=colors[i])
         time.sleep(1.5)
+    time.sleep(5)
     ui_manager.clear_content()
     time.sleep(2)
-    ui_manager.add_content("Goodbye")
+    ui_manager.add_content("bah")
+    ui_manager.add_content("bye")
+    ui_manager.add_content("x")
+    ui_manager.add_content("huh? ", test_callback.test_callback)
+    test_callback.wait_until_data()
+    test_callback.clear_data()
     time.sleep(2)
-    ui_manager.add_content("JK. Fav number? ", test_callback.test_callback)
+    ui_manager.clear_content()
+    time.sleep(2)
+    ui_manager.add_content("hello\r\nthere\nObi-Wan", callback_function=test_callback.test_callback)
     test_callback.wait_until_data()
     test_callback.print_data()
 
