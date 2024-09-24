@@ -1,0 +1,41 @@
+name: Pylint
+
+on: [push, pull_request]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version: ["3.9", "3.10", "3.11", "3.12"]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: checkout private repo
+              uses: actions/checkout@v4
+              with:
+                repository: nga-27/enhanced-input
+                token: ${{ secrets.ENHANCED_INPUT_TO_UI_TOKEN }}
+                path: enhanced-input
+                ref: v0.1.1
+
+            - name: setup python ${{ matrix.python-version }}
+              uses: actions/setup-python@v4
+              with:
+                python-version: ${{ matrix.python-version }}
+
+            - name: replace requirements
+              run: sed -i "33d" setup.py
+            
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install .[dev]
+
+            - name: Install private dependencies
+              run: |
+                pip install ${{ github.workspace }}/enhanced-input
+            
+            - name: Analyze code with pylint
+              run:
+                pylint -d duplicate-code $(git ls-files 'terminal_ui_lite/*.py')
