@@ -34,7 +34,7 @@ class TerminalUILite:
         self.__queue = Queue()
         self.__thread = Thread(target=self.__running_view, args=(self.__queue,))
         self.__base_lines = ascii_base_render
-        if isinstance(ascii_base_render, list):
+        if not isinstance(ascii_base_render, list):
             self.__base_lines = ascii_base_render()
         self.__adjustable_lines = []
         self.__adjustable_length = 0
