@@ -17,7 +17,7 @@ jobs:
                 repository: nga-27/enhanced-input
                 token: ${{ secrets.ENHANCED_INPUT_TO_UI_TOKEN }}
                 path: enhanced-input
-                ref: v0.1.1
+                ref: v0.2.0
 
             - name: setup python ${{ matrix.python-version }}
               uses: actions/setup-python@v4
