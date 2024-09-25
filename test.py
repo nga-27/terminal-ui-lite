@@ -41,6 +41,11 @@ def test():
     ui_manager.add_input_content("huh? ", test_callback.test_callback)
     test_callback.wait_until_data()
     test_callback.clear_data()
+    ui_manager.add_text_content("bye")
+    time.sleep(1)
+    ui_manager.update_last_text_content("bye - OK!", TextColor.GREEN)
+    time.sleep(1)
+    ui_manager.update_last_text_content("bye -\n OK!", TextColor.RED)
     time.sleep(2)
     ui_manager.clear_content()
     time.sleep(2)
@@ -48,6 +53,7 @@ def test():
                                  password_mask="*")
     test_callback.wait_until_data()
     test_callback.print_data()
+
 
 if __name__ == "__main__":
     test()

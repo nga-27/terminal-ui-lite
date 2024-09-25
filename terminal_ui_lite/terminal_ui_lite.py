@@ -44,6 +44,7 @@ class TerminalUILite:
 
     def __running_view(self, queue: Queue):
         """ loads content and runs the terminal view """
+        # pylint: disable=too-many-branches
         for line in self.__base_lines:
             print(line)
         while True:
@@ -57,6 +58,8 @@ class TerminalUILite:
                     self.__adjustable_length = 0
 
                 else:
+                    if content['only_last']:
+                        self.__adjustable_lines.pop(-1)
                     self.__adjustable_lines.append(content["content"])
                     for _ in range(self.__adjustable_length):
                         print("\033[A\033[K", end="")
@@ -99,7 +102,8 @@ class TerminalUILite:
                     "content": spl,
                     "callback": None,
                     "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
-                    "pw_mask": None
+                    "pw_mask": None,
+                    "only_last": False
                 }
                 self.__queue.put(queue_able)
 
@@ -108,7 +112,8 @@ class TerminalUILite:
                 "content": content,
                 "callback": None,
                 "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
-                "pw_mask": None
+                "pw_mask": None,
+                "only_last": False
             }
             self.__queue.put(queue_able)
 
@@ -142,7 +147,8 @@ class TerminalUILite:
                     "content": spl,
                     "callback": None,
                     "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS,
-                    "pw_mask": None
+                    "pw_mask": None,
+                    "only_last": False
                 }
                 sep_lines.append(queue_able.copy())
             sep_lines[-1]["callback"] = callback_function
@@ -156,9 +162,32 @@ class TerminalUILite:
                 "content": content,
                 "callback": callback_function,
                 "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS,
-                "pw_mask": password_mask
+                "pw_mask": password_mask,
+                "only_last": False
             }
             self.__queue.put(queue_able)
+
+    def update_last_text_content(self, content: str,
+                                 text_color: Union[TextColor, None] = None) -> None:
+        """update the last line of content
+        Rejects any new lines or carriage returns
+
+        Args:
+            content (str): string to display
+            text_color (Union[TextColor, None], optional): optional color. Defaults to None.
+        """
+        if text_color:
+            content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        # Rejects new lines
+        content = content.replace("\r", "").replace("\n", " ")
+        queue_able = {
+            "content": content,
+            "callback": None,
+            "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
+            "pw_mask": None,
+            "only_last": True
+        }
+        self.__queue.put(queue_able)
 
     def clear_content(self) -> None:
         """ Clears the non-base content """
