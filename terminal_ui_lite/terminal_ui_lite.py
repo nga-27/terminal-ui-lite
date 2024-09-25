@@ -1,7 +1,7 @@
 """ Main UI Module """
 import time
 from enum import Enum
-from typing import Union, Callable, List
+from typing import Union, Callable, List, Dict, Any
 from threading import Thread
 from queue import Queue
 
@@ -40,39 +40,40 @@ class TerminalUILite:
         self.__adjustable_length = 0
         self.__thread.daemon = True
         self.__thread.start()
-        self.__request_callback: Union[Callable, None] = None
-        self.__input_timeout = DEFAULT_TIMEOUT_FOR_INPUTS
         self.__input_handler = EnhancedInput().input
 
     def __running_view(self, queue: Queue):
         """ loads content and runs the terminal view """
+        # pylint: disable=too-many-branches
         for line in self.__base_lines:
             print(line)
         while True:
             if not queue.empty():
-                content = queue.get()
+                content: Dict[str, Any] = queue.get()
                 message_as_input = None
-                if isinstance(content, list) and len(content) == 0:
+                if content.get('content') is None:
                     self.__adjustable_lines = []
                     for _ in range(self.__adjustable_length):
                         print("\033[A\033[K", end="")
                     self.__adjustable_length = 0
 
                 else:
-                    self.__adjustable_lines.append(content)
+                    if content['only_last']:
+                        self.__adjustable_lines.pop(-1)
+                    self.__adjustable_lines.append(content["content"])
                     for _ in range(self.__adjustable_length):
                         print("\033[A\033[K", end="")
-                    if self.__request_callback:
+                    if content["callback"]:
                         message_as_input = self.__adjustable_lines.pop(-1)
                     self.__adjustable_length = len(self.__adjustable_lines)
 
                 for line in self.__adjustable_lines:
                     print(line)
-                if self.__request_callback:
+                if content.get("callback") is not None:
                     data = self.__input_handler(
-                        prompt=message_as_input, timeout=self.__input_timeout)
-                    self.__request_callback(data)
-                    self.__request_callback = None
+                        prompt=message_as_input, timeout=content['timeout'],
+                        password_mask=content['pw_mask'])
+                    content["callback"](data)
                     self.__adjustable_length += 1
 
                     for _ in range(self.__adjustable_length):
@@ -82,9 +83,44 @@ class TerminalUILite:
                     self.__adjustable_length = len(self.__adjustable_lines)
             time.sleep(0.1)
 
-    def add_content(self, content: str, callback_function: Union[Callable, None] = None,
-                    input_timeout: Union[int, None] = None,
-                    text_color: Union[TextColor, None] = None) -> None:
+    def add_text_content(self, content: str, text_color: Union[TextColor, None] = None) -> None:
+        """Adds content to the screen terminal
+
+        Args:
+            content (str): content to add
+            text_color (Union[TextColor, None], optional): color to display content.
+                                                        Defaults to None.
+        """
+        if text_color:
+            content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        if '\n' in content:
+            # Replace any return carriages first, if any
+            content = content.replace('\r', '')
+            split_content = content.split('\n')
+            for spl in split_content:
+                queue_able = {
+                    "content": spl,
+                    "callback": None,
+                    "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
+                    "pw_mask": None,
+                    "only_last": False
+                }
+                self.__queue.put(queue_able)
+
+        else:
+            queue_able = {
+                "content": content,
+                "callback": None,
+                "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
+                "pw_mask": None,
+                "only_last": False
+            }
+            self.__queue.put(queue_able)
+
+    def add_input_content(self, content: str, callback_function: Callable, # pylint: disable=too-many-arguments
+                          input_timeout: Union[int, None] = None,
+                          text_color: Union[TextColor, None] = None,
+                          password_mask: Union[str, None] = None):
         """Adds content to the screen terminal
 
         Args:
@@ -95,14 +131,64 @@ class TerminalUILite:
                                                         Defaults to None.
             text_color (Union[TextColor, None], optional): color to display content.
                                                         Defaults to None.
+            password_mask (Union[str, None], optional): Used for a password input. Mask will be the
+                                                    hidden password chars. If callback_function is
+                                                    None, this is ignored. Default is None.
         """
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
-        self.__queue.put(content)
-        if callback_function:
-            self.__request_callback = callback_function
-            self.__input_timeout = input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS
+        if '\n' in content:
+            # Replace any return carriages first, if any
+            content = content.replace('\r', '')
+            split_content = content.split('\n')
+            sep_lines = []
+            for spl in split_content:
+                queue_able = {
+                    "content": spl,
+                    "callback": None,
+                    "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS,
+                    "pw_mask": None,
+                    "only_last": False
+                }
+                sep_lines.append(queue_able.copy())
+            sep_lines[-1]["callback"] = callback_function
+            if password_mask is not None:
+                sep_lines[-1]["pw_mask"] = password_mask
+            for line in sep_lines:
+                self.__queue.put(line)
+
+        else:
+            queue_able = {
+                "content": content,
+                "callback": callback_function,
+                "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS,
+                "pw_mask": password_mask,
+                "only_last": False
+            }
+            self.__queue.put(queue_able)
+
+    def update_last_text_content(self, content: str,
+                                 text_color: Union[TextColor, None] = None) -> None:
+        """update the last line of content
+        Rejects any new lines or carriage returns
+
+        Args:
+            content (str): string to display
+            text_color (Union[TextColor, None], optional): optional color. Defaults to None.
+        """
+        if text_color:
+            content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        # Rejects new lines
+        content = content.replace("\r", "").replace("\n", " ")
+        queue_able = {
+            "content": content,
+            "callback": None,
+            "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
+            "pw_mask": None,
+            "only_last": True
+        }
+        self.__queue.put(queue_able)
 
     def clear_content(self) -> None:
         """ Clears the non-base content """
-        self.__queue.put([])
+        self.__queue.put({})
