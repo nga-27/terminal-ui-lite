@@ -3,6 +3,16 @@ A light-weight way to have a terminal as a basic UI for servers and non-graphica
 
 <img src="static/jungle_for_terminal.jpeg" alt="jungle out there" width=400 />
 
+## Contents
+
+- **[Installation](#installation)**
+- **[API Guide](#api-functions)**
+    - [Initialization](#initialization)
+    - [Base Content Types](#base-content-types)
+    - [Content Modification](#content-modification)
+    - [Ellipses](#ellipses-plural-of-ellipsis)
+- **[Usage](#usage)**
+
 ---
 
 # Installation
@@ -10,6 +20,68 @@ A light-weight way to have a terminal as a basic UI for servers and non-graphica
 ```sh
 pip install terminal_ui_lite @ git+ssh://git@github.com/nga-27/terminal-ui-lite.git@v0.2.0
 ```
+
+---
+
+# API Functions
+
+## Initialization
+
+To start the UI, you need to pass in a base string that will serve as the "homepage". These can be elaborate [ASCII ART](https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20) or simple messages saying that the service is running.
+
+```python
+ui_manager = TerminalUILite(START_UP_ASCII_STRING)
+```
+
+## Base Content Types
+
+The first of 2 base content types is `add_text_content`. This is a base text value that has optional colored text.
+
+```python
+ui_manager.add_text_content("this is what will print", text_color: Union[TextColor, None] = TextColor.GREEN)
+```
+
+The second of 2 base content types is `add_input_content`. Here, the UI implements a timeout-driven input field (basically the `input` native python function but with an OS-compatible timeout feature so the UI doesn't hang indefinitely waiting input). The default timeout is 30s, but can be whatever is desired.
+
+`add_input_content` also requires a call back function that is given the parameter of `data`, which is the user-input string from the input line. `text_color`, `input_timeout`, and `password_mask` are optional parameters. (`input_timeout` is the aforementioned timeout for the input component.)
+
+`password_mask` is `None` by default. When a password-like input (hides the user's input) is needed, add a value for `password_mask` as a "cover up" character. Typical ones are asterisks `'*'` or, for hiding the length of the entry, an empty string `""`.
+
+```python
+ui_manager.add_input_content(
+    "Ask a question? [Y/n] ", callback_function, text_color: Union[Textolor, None] = None, input_timeout: Union[int, None] = None,
+    password_mask: Union[str, None] = None)
+```
+
+## Content Modification
+
+There are 2 functions that highlight content modification. The first is `clear_content`, which does what it sounds like - it clears the _variable_ content. By _variable_, it means that the function will not remove the base "homepage" but will remove everything else. (In future versions, there could be save-able "memory banks" of sets of print outs beyond the base content; i.e. content that might not be as ephemeral as the adjustable content but also not as permanent as the "homepage" content.)
+
+```python
+ui_manager.clear_content()
+```
+
+The second of these modification elements is the `update_last_text_content`. In some UI topologies, it's desired to have a message be updated after an operation completes. For example, if the content sent was "Updating data...", it is conceivable that the message after the functional operation was completed could be "Updating data... DONE!". Perhaps this second message could even be green when the first message was white, yellow, or something else. Or, in an error state, it could even be "Updating data... ERROR!" and the text could be red.
+
+In all cases, there is a desire with this UI component to have the ability to update the last line. Yes, you could also do it with the base components if you keep track of UI messages; however, this just simplifies something that could come up more frequently than not.
+
+```python
+ui_manager.update_last_text_content("updated message!", text_color: Union[TextColor, None] = TextColor.GREEN)
+```
+
+**Note**: any newlines `\n` or return carriages `\r` are removed and ignored with this function, since it _is_ only the last line of the screen. Keep that in mind!
+
+## Ellipses (plural of 'ellipsis')
+
+Another fun function of terminal-based UIs is the need for ellipses when running a process. To utilize this, you may run `add_ellipsis_content`. Here, you can optionally specify the rate of ellipses added and the overall duration, within some reason (the combined product of `interval` * `duration` cannot exceed 60. If this product exceeds 60, the `duration` will revert to 60.0 and the `interval` will revert to 1.0.)
+
+When the ellipsis content is completed, it will be removed from the UI. It's recommended to immediately load the next message after this call is made. (For this version, this function is blocking any additional prints from appearing, but they will be queued as usual.)
+
+```python
+ui_manager.add_ellipsis_content("message", duration: float = 5.0, interval: float = 1.0, text_color: Union[TextColor, None] = None)
+```
+
+In future releases, there will be a secondary function provided that can prematurely stop the ellipsis function. This will require a bit of rework, but it will allow the ellipsis function to serve as a true "loading..." type UI component.
 
 ---
 
@@ -86,65 +158,3 @@ def test():
 if __name__ == "__main__":
     test()
 ```
-
----
-
-# API Functions
-
-## Initialization
-
-To start the UI, you need to pass in a base string that will serve as the "homepage". These can be elaborate [ASCII ART](https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20) or simple messages saying that the service is running.
-
-```python
-ui_manager = TerminalUILite(START_UP_ASCII_STRING)
-```
-
-## Base Content Types
-
-The first of 2 base content types is `add_text_content`. This is a base text value that has optional colored text.
-
-```python
-ui_manager.add_text_content("this is what will print", text_color: Union[TextColor, None] = TextColor.GREEN)
-```
-
-The second of 2 base content types is `add_input_content`. Here, the UI implements a timeout-driven input field (basically the `input` native python function but with an OS-compatible timeout feature so the UI doesn't hang indefinitely waiting input). The default timeout is 30s, but can be whatever is desired.
-
-`add_input_content` also requires a call back function that is given the parameter of `data`, which is the user-input string from the input line. `text_color`, `input_timeout`, and `password_mask` are optional parameters. (`input_timeout` is the aforementioned timeout for the input component.)
-
-`password_mask` is `None` by default. When a password-like input (hides the user's input) is needed, add a value for `password_mask` as a "cover up" character. Typical ones are asterisks `'*'` or, for hiding the length of the entry, an empty string `""`.
-
-```python
-ui_manager.add_input_content(
-    "Ask a question? [Y/n] ", callback_function, text_color: Union[Textolor, None] = None, input_timeout: Union[int, None] = None,
-    password_mask: Union[str, None] = None)
-```
-
-## Content Modification
-
-There are 2 functions that highlight content modification. The first is `clear_content`, which does what it sounds like - it clears the _variable_ content. By _variable_, it means that the function will not remove the base "homepage" but will remove everything else. (In future versions, there could be save-able "memory banks" of sets of print outs beyond the base content; i.e. content that might not be as ephemeral as the adjustable content but also not as permanent as the "homepage" content.)
-
-```python
-ui_manager.clear_content()
-```
-
-The second of these modification elements is the `update_last_text_content`. In some UI topologies, it's desired to have a message be updated after an operation completes. For example, if the content sent was "Updating data...", it is conceivable that the message after the functional operation was completed could be "Updating data... DONE!". Perhaps this second message could even be green when the first message was white, yellow, or something else. Or, in an error state, it could even be "Updating data... ERROR!" and the text could be red.
-
-In all cases, there is a desire with this UI component to have the ability to update the last line. Yes, you could also do it with the base components if you keep track of UI messages; however, this just simplifies something that could come up more frequently than not.
-
-```python
-ui_manager.update_last_text_content("updated message!", text_color: Union[TextColor, None] = TextColor.GREEN)
-```
-
-**Note**: any newlines `\n` or return carriages `\r` are removed and ignored with this function, since it _is_ only the last line of the screen. Keep that in mind!
-
-## Ellipses (plural of 'ellipsis')
-
-Another fun function of terminal-based UIs is the need for ellipses when running a process. To utilize this, you may run `add_ellipsis_content`. Here, you can optionally specify the rate of ellipses added and the overall duration, within some reason (the combined product of `interval` * `duration` cannot exceed 60. If this product exceeds 60, the `duration` will revert to 60.0 and the `interval` will revert to 1.0.)
-
-When the ellipsis content is completed, it will be removed from the UI. It's recommended to immediately load the next message after this call is made. (For this version, this function is blocking any additional prints from appearing, but they will be queued as usual.)
-
-```python
-ui_manager.add_ellipsis_content("message", duration: float = 5.0, interval: float = 1.0, text_color: Union[TextColor, None] = None)
-```
-
-In future releases, there will be a secondary function provided that can prematurely stop the ellipsis function. This will require a bit of rework, but it will allow the ellipsis function to serve as a true "loading..." type UI component.
