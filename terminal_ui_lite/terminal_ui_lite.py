@@ -57,6 +57,20 @@ class TerminalUILite:
                         print("\033[A\033[K", end="")
                     self.__adjustable_length = 0
 
+                elif content.get('ellipsis', False):
+                    # Doesn't get kept on the list
+                    cycles = round(content['duration'] / content['interval'])
+                    if cycles > 60:
+                        content['interval'] = 1.0
+                        content['duration'] = 60.0
+                    content["content"] = content["content"].expandtabs(8)
+                    for _ in range(cycles):
+                        print(content["content"], end="\r")
+                        content["content"] += '.'
+                        time.sleep(content['interval'])
+                    print(" " * (len(content["content"]) + 2), end="\r")
+                    continue
+
                 else:
                     if content['only_last']:
                         self.__adjustable_lines.pop(-1)
@@ -186,6 +200,34 @@ class TerminalUILite:
             "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
             "pw_mask": None,
             "only_last": True
+        }
+        self.__queue.put(queue_able)
+
+    def add_ellipsis_content(self, content: str, duration: float = 5.0, interval: float = 1.0,
+                             text_color: Union[TextColor, None] = None):
+        """Add content that will be like a "loading" screen with additional ellipses
+
+        Args:
+            content (str): message that will have the ellipsis appended to
+            duration (float, optional): duration (in s) of blocking ellipsis view. Defaults to 5.0.
+            interval (float, optional): interval (in s) of printed periods. Defaults to 1.0.
+            text_color (Union[TextColor, None], optional): text color. Defaults to None.
+        """
+        if not len(content) < 3 or '...' == content[-3:]:
+            content += "..."
+        if text_color:
+            content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        # Rejects new lines
+        content = content.replace("\r", "").replace("\n", " ")
+        queue_able = {
+            "content": content,
+            "callback": None,
+            "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
+            "pw_mask": None,
+            "only_last": False,
+            "ellipsis": True,
+            "interval": interval,
+            "duration": duration
         }
         self.__queue.put(queue_able)
 
