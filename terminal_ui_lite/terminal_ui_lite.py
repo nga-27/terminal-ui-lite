@@ -234,3 +234,10 @@ class TerminalUILite:
     def clear_content(self) -> None:
         """ Clears the non-base content """
         self.__queue.put({})
+
+    def clear_print_lines(self, number_of_lines: int) -> None:
+        """ Erases 'number_of_lines' from the screen, useful when prints crowd terminal view """
+        if number_of_lines < 0:
+            number_of_lines = 0
+        for _ in range(number_of_lines):
+            print("\033[A\033[K", end="")
