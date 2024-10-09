@@ -52,19 +52,7 @@ class TerminalUILite:
             if not queue.empty():
                 content: Dict[str, Any] = queue.get()
                 message_as_input = None
-                if content.get('content') is None:
-                    terminal_width = os.get_terminal_size()[0]
-                    for row_i in range(self.__adjustable_length):
-                        if row_i < len(self.__adjustable_lines):
-                            updated_len = len(self.__adjustable_lines[row_i])
-                            while updated_len > terminal_width:
-                                print("\033[A\033[K", end="")
-                                updated_len -= terminal_width
-                        print("\033[A\033[K", end="")
-                    self.__adjustable_lines = []
-                    self.__adjustable_length = 0
-
-                elif content.get('ellipsis', False):
+                if content.get('ellipsis', False):
                     # Doesn't get kept on the list
                     cycles = round(content['duration'] / content['interval'])
                     if cycles > 60:
@@ -78,19 +66,34 @@ class TerminalUILite:
                     print(" " * (len(content["content"]) + 2), end="\r")
                     continue
 
-                else:
-                    if content['only_last']:
-                        self.__adjustable_lines.pop(-1)
-                    self.__adjustable_lines.append(content["content"])
-                    for _ in range(self.__adjustable_length):
-                        print("\033[A\033[K", end="")
-                    if content["callback"]:
-                        message_as_input = self.__adjustable_lines.pop(-1)
-                    self.__adjustable_length = len(self.__adjustable_lines)
+                
+                terminal_width = os.get_terminal_size()[0]
+                for row_i in range(self.__adjustable_length):
+                    if row_i < len(self.__adjustable_lines):
+                        updated_len = len(self.__adjustable_lines[row_i])
+                        while updated_len > terminal_width:
+                            print("\033[A\033[K", end="")
+                            updated_len -= terminal_width
+                    print("\033[A\033[K", end="")
+
+                if content.get('content') is None:
+                    self.__adjustable_lines = []
+                    self.__adjustable_length = 0
+                    continue
+
+                if content['only_last'] and len(self.__adjustable_lines) > 0:
+                    self.__adjustable_lines.pop(-1)
+                self.__adjustable_lines.append(content["content"])
+                # for _ in range(self.__adjustable_length):
+                #     print("\033[A\033[K", end="")
+                if content["callback"]:
+                    message_as_input = self.__adjustable_lines.pop(-1)
+                self.__adjustable_length = len(self.__adjustable_lines)
 
                 for line in self.__adjustable_lines:
                     print(line)
-                if content.get("callback") is not None:
+
+                if content['callback']:
                     data = self.__input_handler(
                         prompt=message_as_input, timeout=content['timeout'],
                         password_mask=content['pw_mask'])
@@ -102,9 +105,9 @@ class TerminalUILite:
                     for line in self.__adjustable_lines:
                         print(line)
                     self.__adjustable_length = len(self.__adjustable_lines)
-            time.sleep(0.1)
+            time.sleep(0.01)
 
-    def add_text_content(self, content: str, text_color: Union[TextColor, None] = None) -> None:
+    def add_text_content(self, content: Any, text_color: Union[TextColor, None] = None) -> None:
         """Adds content to the screen terminal
 
         Args:
@@ -112,6 +115,8 @@ class TerminalUILite:
             text_color (Union[TextColor, None], optional): color to display content.
                                                         Defaults to None.
         """
+        if not isinstance(content, str):
+            content = str(content)
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
         if '\n' in content:

@@ -31,6 +31,12 @@ def test():
     test_callback = TestCallback()
     time.sleep(2)
     colors = [TextColor.RED, TextColor.GREEN, TextColor.BLUE]
+    ui_manager.add_text_content(8)
+    ui_manager.add_text_content({"hello": "there"})
+    garbage = {f"key{x}": f"value{x}" for x in range(15)}
+    ui_manager.add_text_content(garbage)
+    ui_manager.add_text_content(len(garbage))
+    ui_manager.add_text_content(len(str(garbage)))
     for i in range(3):
         ui_manager.add_text_content(f"Hello World {i+1}", text_color=colors[i])
         time.sleep(1.5)
