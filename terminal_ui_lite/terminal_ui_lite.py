@@ -56,8 +56,10 @@ class TerminalUILite:
                     terminal_width = os.get_terminal_size()[0]
                     for row_i in range(self.__adjustable_length):
                         if row_i < len(self.__adjustable_lines):
-                            while len(self.__adjustable_lines[row_i]) > terminal_width:
+                            updated_len = len(self.__adjustable_lines[row_i])
+                            while updated_len > terminal_width:
                                 print("\033[A\033[K", end="")
+                                updated_len -= terminal_width
                         print("\033[A\033[K", end="")
                     self.__adjustable_lines = []
                     self.__adjustable_length = 0

@@ -1,21 +1,22 @@
 import time
+import os
 
 from terminal_ui_lite import TerminalUILite, TextColor
 
 class TestCallback:
     def __init__(self):
-        self.data = None
+        self.data = "FASDFASDFASDFASDAF"
 
     def test_callback(self, data):
         self.data = data
 
     def wait_until_data(self):
-        while not self.data:
+        while self.data == "FASDFASDFASDFASDAF":
             time.sleep(0.1)
         return self.data
     
     def clear_data(self):
-        self.data = None
+        self.data = "FASDFASDFASDFASDAF"
     
     def print_data(self) -> str:
         # print(self.data)
@@ -36,10 +37,15 @@ def test():
     time.sleep(3)
     ui_manager.clear_content()
     time.sleep(2)
+    term_width = os.get_terminal_size()[0]
+    ui_manager.add_text_content("**" * (2 * term_width))
+    time.sleep(2)
+    ui_manager.clear_content()
+    time.sleep(3)
     ui_manager.add_text_content("bah")
     ui_manager.add_text_content("bye")
     ui_manager.add_text_content("x")
-    ui_manager.add_input_content("huh? ", test_callback.test_callback)
+    ui_manager.add_input_content("huh? ", test_callback.test_callback, input_timeout=15)
     test_callback.wait_until_data()
     test_callback.clear_data()
     ui_manager.add_text_content("checking....")
