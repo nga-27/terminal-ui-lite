@@ -1,5 +1,6 @@
 import time
 import os
+from typing import List
 
 from terminal_ui_lite import TerminalUILite, TextColor
 
@@ -22,12 +23,21 @@ class TestCallback:
         # print(self.data)
         return self.data
 
-START_UP = ["""
+START_UP = """
     HI THERE!!!! THIS IS MY APP
-"""]
+"""
+
+def start_up_text() -> List[str]:
+    lines = []
+    lines.append(" ")
+    lines.append(START_UP)
+    lines.append(" ")
+    lines.append(" mysterious other thing ")
+    lines.append(" ")
+    return lines
 
 def test():
-    ui_manager = TerminalUILite(START_UP)
+    ui_manager = TerminalUILite(start_up_text())
     test_callback = TestCallback()
     time.sleep(2)
     colors = [TextColor.RED, TextColor.GREEN, TextColor.BLUE]

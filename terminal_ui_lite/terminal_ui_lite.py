@@ -48,10 +48,14 @@ class TerminalUILite:
         # pylint: disable=too-many-branches
         for line in self.__base_lines:
             print(line)
+        self.__adjustable_length = 0
+        self.__adjustable_lines = []
         while True:
             if not queue.empty():
                 content: Dict[str, Any] = queue.get()
                 message_as_input = None
+
+                # Ellipses do not affect the overall printout list
                 if content.get('ellipsis', False):
                     # Doesn't get kept on the list
                     cycles = round(content['duration'] / content['interval'])
