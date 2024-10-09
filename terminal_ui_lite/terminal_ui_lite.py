@@ -108,7 +108,7 @@ class TerminalUILite:
                     for line in self.__adjustable_lines:
                         print(line)
                     self.__adjustable_length = len(self.__adjustable_lines)
-            time.sleep(0.01)
+            time.sleep(0.1)
 
     def add_text_content(self, content: Any, text_color: Union[TextColor, None] = None) -> None:
         """Adds content to the screen terminal
