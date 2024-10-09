@@ -66,33 +66,32 @@ class TerminalUILite:
                     print(" " * (len(content["content"]) + 2), end="\r")
                     continue
 
-                
+                # Clear the terminal to refresh
                 terminal_width = os.get_terminal_size()[0]
-                for row_i in range(self.__adjustable_length):
-                    if row_i < len(self.__adjustable_lines):
-                        updated_len = len(self.__adjustable_lines[row_i])
-                        while updated_len > terminal_width:
-                            print("\033[A\033[K", end="")
-                            updated_len -= terminal_width
+                for row_val in self.__adjustable_lines:
+                    updated_len = len(row_val)
+                    while updated_len > terminal_width:
+                        print("\033[A\033[K", end="")
+                        updated_len -= terminal_width
                     print("\033[A\033[K", end="")
 
+                # Actually want to delete
                 if content.get('content') is None:
                     self.__adjustable_lines = []
                     self.__adjustable_length = 0
                     continue
 
+                # Add in the newly updated content
                 if content['only_last'] and len(self.__adjustable_lines) > 0:
                     self.__adjustable_lines.pop(-1)
                 self.__adjustable_lines.append(content["content"])
-                # for _ in range(self.__adjustable_length):
-                #     print("\033[A\033[K", end="")
                 if content["callback"]:
                     message_as_input = self.__adjustable_lines.pop(-1)
                 self.__adjustable_length = len(self.__adjustable_lines)
-
                 for line in self.__adjustable_lines:
                     print(line)
 
+                # Special case with input prompt
                 if content['callback']:
                     data = self.__input_handler(
                         prompt=message_as_input, timeout=content['timeout'],
@@ -119,9 +118,10 @@ class TerminalUILite:
             content = str(content)
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        if '\r' in content:
+            content = content.replace('\r', '')
         if '\n' in content:
             # Replace any return carriages first, if any
-            content = content.replace('\r', '')
             split_content = content.split('\n')
             for spl in split_content:
                 queue_able = {
@@ -163,9 +163,10 @@ class TerminalUILite:
         """
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        if '\r' in content:
+            content = content.replace('\r', '')
         if '\n' in content:
             # Replace any return carriages first, if any
-            content = content.replace('\r', '')
             split_content = content.split('\n')
             sep_lines = []
             for spl in split_content:
