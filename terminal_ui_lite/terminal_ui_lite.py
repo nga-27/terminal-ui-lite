@@ -1,4 +1,5 @@
 """ Main UI Module """
+import os
 import time
 from enum import Enum
 from typing import Union, Callable, List, Dict, Any
@@ -52,9 +53,13 @@ class TerminalUILite:
                 content: Dict[str, Any] = queue.get()
                 message_as_input = None
                 if content.get('content') is None:
-                    self.__adjustable_lines = []
-                    for _ in range(self.__adjustable_length):
+                    terminal_width = os.get_terminal_size()[0]
+                    for row_i in range(self.__adjustable_length):
+                        if row_i < len(self.__adjustable_lines):
+                            while len(self.__adjustable_lines[row_i]) > terminal_width:
+                                print("\033[A\033[K", end="")
                         print("\033[A\033[K", end="")
+                    self.__adjustable_lines = []
                     self.__adjustable_length = 0
 
                 elif content.get('ellipsis', False):
