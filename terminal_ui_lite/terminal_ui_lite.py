@@ -9,10 +9,10 @@ from queue import Queue
 from enhanced_input import EnhancedInput
 from colorama import just_fix_windows_console
 
+from .models import DEFAULT_TIMEOUT_FOR_INPUTS, QueueObject
+
 
 just_fix_windows_console()
-
-DEFAULT_TIMEOUT_FOR_INPUTS = 30.0
 
 class TextColor(Enum):
     """ Color options that are supported """
@@ -56,7 +56,7 @@ class TerminalUILite:
                 message_as_input = None
 
                 # Ellipses do not affect the overall printout list
-                if content.get('ellipsis', False):
+                if content['ellipsis']:
                     # Doesn't get kept on the list
                     cycles = round(content['duration'] / content['interval'])
                     if cycles > 60:
@@ -68,46 +68,46 @@ class TerminalUILite:
                         content["content"] += '.'
                         time.sleep(content['interval'])
                     print(" " * (len(content["content"]) + 2), end="\r")
-                    continue
 
-                # Clear the terminal to refresh
-                terminal_width = os.get_terminal_size()[0]
-                for row_val in self.__adjustable_lines:
-                    updated_len = len(row_val)
-                    while updated_len > terminal_width:
+                else:
+                    # Clear the terminal to refresh
+                    terminal_width = os.get_terminal_size()[0]
+                    for row_val in self.__adjustable_lines:
+                        updated_len = len(row_val)
+                        while updated_len > terminal_width:
+                            print("\033[A\033[K", end="")
+                            updated_len -= terminal_width
                         print("\033[A\033[K", end="")
-                        updated_len -= terminal_width
-                    print("\033[A\033[K", end="")
 
-                # Actually want to delete
-                if content.get('content') is None:
-                    self.__adjustable_lines = []
-                    self.__adjustable_length = 0
-                    continue
+                    # Actually want to delete
+                    if content['content'] is None:
+                        self.__adjustable_lines = []
+                        self.__adjustable_length = 0
 
-                # Add in the newly updated content
-                if content['only_last'] and len(self.__adjustable_lines) > 0:
-                    self.__adjustable_lines.pop(-1)
-                self.__adjustable_lines.append(content["content"])
-                if content["callback"]:
-                    message_as_input = self.__adjustable_lines.pop(-1)
-                self.__adjustable_length = len(self.__adjustable_lines)
-                for line in self.__adjustable_lines:
-                    print(line)
+                    else:
+                        # Add in the newly updated content
+                        if content['only_last'] and len(self.__adjustable_lines) > 0:
+                            self.__adjustable_lines.pop(-1)
+                        self.__adjustable_lines.append(content["content"])
+                        if content["callback"]:
+                            message_as_input = self.__adjustable_lines.pop(-1)
+                        self.__adjustable_length = len(self.__adjustable_lines)
+                        for line in self.__adjustable_lines:
+                            print(line)
 
-                # Special case with input prompt
-                if content['callback']:
-                    data = self.__input_handler(
-                        prompt=message_as_input, timeout=content['timeout'],
-                        password_mask=content['pw_mask'])
-                    content["callback"](data)
-                    self.__adjustable_length += 1
+                        # Special case with input prompt
+                        if content['callback']:
+                            data = self.__input_handler(
+                                prompt=message_as_input, timeout=content['timeout'],
+                                password_mask=content['pw_mask'])
+                            content["callback"](data)
+                            self.__adjustable_length += 1
 
-                    for _ in range(self.__adjustable_length):
-                        print("\033[A\033[K", end="")
-                    for line in self.__adjustable_lines:
-                        print(line)
-                    self.__adjustable_length = len(self.__adjustable_lines)
+                            for _ in range(self.__adjustable_length):
+                                print("\033[A\033[K", end="")
+                            for line in self.__adjustable_lines:
+                                print(line)
+                            self.__adjustable_length = len(self.__adjustable_lines)
             time.sleep(0.1)
 
     def add_text_content(self, content: Any, text_color: Union[TextColor, None] = None) -> None:
@@ -128,23 +128,10 @@ class TerminalUILite:
             # Replace any return carriages first, if any
             split_content = content.split('\n')
             for spl in split_content:
-                queue_able = {
-                    "content": spl,
-                    "callback": None,
-                    "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
-                    "pw_mask": None,
-                    "only_last": False
-                }
+                queue_able = QueueObject(content=spl).__dict__
                 self.__queue.put(queue_able)
-
         else:
-            queue_able = {
-                "content": content,
-                "callback": None,
-                "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
-                "pw_mask": None,
-                "only_last": False
-            }
+            queue_able = QueueObject(content=content).__dict__
             self.__queue.put(queue_able)
 
     def add_input_content(self, content: str, callback_function: Callable, # pylint: disable=too-many-arguments
@@ -167,36 +154,12 @@ class TerminalUILite:
         """
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
-        if '\r' in content:
-            content = content.replace('\r', '')
-        if '\n' in content:
-            # Replace any return carriages first, if any
-            split_content = content.split('\n')
-            sep_lines = []
-            for spl in split_content:
-                queue_able = {
-                    "content": spl,
-                    "callback": None,
-                    "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS,
-                    "pw_mask": None,
-                    "only_last": False
-                }
-                sep_lines.append(queue_able.copy())
-            sep_lines[-1]["callback"] = callback_function
-            if password_mask is not None:
-                sep_lines[-1]["pw_mask"] = password_mask
-            for line in sep_lines:
-                self.__queue.put(line)
-
-        else:
-            queue_able = {
-                "content": content,
-                "callback": callback_function,
-                "timeout": input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS,
-                "pw_mask": password_mask,
-                "only_last": False
-            }
-            self.__queue.put(queue_able)
+        # Ignore newlines and carriage returns
+        content = content.replace('\r', '').replace('\n', ' ')
+        queue_able = QueueObject(content=content, callback=callback_function,
+                                 pw_mask=password_mask).__dict__
+        queue_able["timeout"] = input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS
+        self.__queue.put(queue_able)
 
     def update_last_text_content(self, content: str,
                                  text_color: Union[TextColor, None] = None) -> None:
@@ -211,13 +174,7 @@ class TerminalUILite:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
         # Rejects new lines
         content = content.replace("\r", "").replace("\n", " ")
-        queue_able = {
-            "content": content,
-            "callback": None,
-            "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
-            "pw_mask": None,
-            "only_last": True
-        }
+        queue_able = QueueObject(content=content, only_last=True).__dict__
         self.__queue.put(queue_able)
 
     def add_ellipsis_content(self, content: str, duration: float = 5.0, interval: float = 1.0,
@@ -235,22 +192,15 @@ class TerminalUILite:
         if text_color:
             content = f"{text_color.value}{content}{TextColor.RESET.value}"
         # Rejects new lines
-        content = content.replace("\r", "").replace("\n", " ")
-        queue_able = {
-            "content": content,
-            "callback": None,
-            "timeout": DEFAULT_TIMEOUT_FOR_INPUTS,
-            "pw_mask": None,
-            "only_last": False,
-            "ellipsis": True,
-            "interval": interval,
-            "duration": duration
-        }
+        content = content.replace("\r", "").replace("\n", " ", 1)
+        queue_able = QueueObject(content=content, ellipsis=True,
+                                 interval=interval, duration=duration).__dict__
         self.__queue.put(queue_able)
 
     def clear_content(self) -> None:
         """ Clears the non-base content """
-        self.__queue.put({})
+        self.__queue.put(QueueObject().__dict__)
+        self.__queue.put(QueueObject(content="").__dict__)
 
     def clear_print_lines(self, number_of_lines: int) -> None:
         """ Erases 'number_of_lines' from the screen, useful when prints crowd terminal view """
