@@ -50,7 +50,7 @@ class TerminalUILite:
             print(line)
         self.__adjustable_length = 0
         self.__adjustable_lines = []
-        while True:
+        while True: # pylint: disable=too-many-nested-blocks
             if not queue.empty():
                 content: Dict[str, Any] = queue.get()
                 message_as_input = None
@@ -204,7 +204,6 @@ class TerminalUILite:
 
     def clear_print_lines(self, number_of_lines: int) -> None:
         """ Erases 'number_of_lines' from the screen, useful when prints crowd terminal view """
-        if number_of_lines < 0:
-            number_of_lines = 0
+        number_of_lines = max(0, number_of_lines)
         for _ in range(number_of_lines):
             print("\033[A\033[K", end="")
