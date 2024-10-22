@@ -21,7 +21,7 @@ from setuptools import find_packages, setup
 # Package meta-data.
 NAME = 'terminal-ui-lite'
 DESCRIPTION = 'A light-weight way to have a terminal as a basic UI for servers and non-graphical UIs'
-URL = 'https://github.mmm.com/nga-27/terminal-ui-lite'
+URL = 'https://github.com/nga-27/terminal-ui-lite'
 EMAIL = 'namell91@gmail.com'
 AUTHOR = 'Nick Amell'
 REQUIRES_PYTHON = '>=3.9.0, <3.13.0'
