@@ -23,7 +23,7 @@ urls = {homepage = "https://github.com/nga-27/terminal-ui-lite"}
 
 dependencies = [
     'colorama',
-    'enhanced_input@git+ssh://git@github.com/nga-27/enhanced-input.git@v0.2.2'
+    'enhanced_input @ git+http://github.com/nga-27/enhanced-input.git@v0.2.2'
 ]
 
 [project.optional-dependencies]
