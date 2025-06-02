@@ -4,16 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "terminal-ui-lite"
-version = "0.3.1"
+version = "0.3.2"
 description = "A light-weight way to have a terminal as a basic UI for servers and non-graphical UIs"
 authors = [
     {name = "Nick Amell", email = "namell91@gmail.com"}
 ]
-requires-python = ">=3.9.0, <3.13.0"
+requires-python = ">=3.8.0, <3.13.0"
 license = {text = "MIT"}
 classifiers = [
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
@@ -23,7 +24,7 @@ urls = {homepage = "https://github.com/nga-27/terminal-ui-lite"}
 
 dependencies = [
     'colorama',
-    'enhanced_input @ git+http://github.com/nga-27/enhanced-input.git@v0.2.2'
+    'enhanced_input @ git+https://github.com/nga-27/enhanced-input.git@v0.2.3'
 ]
 
 [project.optional-dependencies]
