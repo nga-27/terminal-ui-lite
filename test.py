@@ -88,7 +88,10 @@ def test():
     custom_offset = ui_manager.terminal_centering_offset - 10
     ui_manager.terminal_centering_offset = custom_offset
     print(f"Offset is: {ui_manager.terminal_centering_offset} (should be 5)")
-
+    print(f"{ui_manager.get_offset()}Basic offset")
+    print(f"{ui_manager.get_offset(7)}+7 offset")
+    print(f"{ui_manager.get_offset(-2)}-2 offset")
+    print(f"{ui_manager.get_offset(-25)}-25 offset")
 
 
 if __name__ == "__main__":

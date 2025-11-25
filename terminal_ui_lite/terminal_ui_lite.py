@@ -213,6 +213,12 @@ class TerminalUILite:
         for _ in range(number_of_lines):
             print("\033[A\033[K", end="")
 
-    def get_offset(self) -> str:
+    def get_offset(self, additional_offset: int = 0) -> str:
         """ Adds an spacing offset as a string """
-        return f"{self.terminal_centering_offset * ' '}"
+        offset_val = self.terminal_centering_offset + additional_offset
+        if self.terminal_centering_offset + additional_offset > os.get_terminal_size().columns:
+            offset_val = os.get_terminal_size().columns - 2
+        if self.terminal_centering_offset + additional_offset < 0:
+            # Negative additional_offset
+            offset_val = 0
+        return f"{(offset_val) * ' '}"

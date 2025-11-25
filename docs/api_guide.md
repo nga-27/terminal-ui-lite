@@ -123,4 +123,8 @@ To use this feature, simply call `get_offset()`:
 ui_manager = TerminalUILite(START_UP_ASCII_STRING, terminal_centering_offset=10)
 # Text will be offset by 10 characters
 ui_manager.add_ellipsis_content(f"{ui_manager.get_offset()}Waiting for this to complete", duration=7.0, interval=0.7, text_color=TextColor.YELLOW)
+
+# Additionally, you can use your standard offset +/- additional:
+ui_manager.add_ellipsis_content(f"{ui_manager.get_offset(6)}Waiting for this to complete", duration=7.0, interval=0.7, text_color=TextColor.YELLOW)
+ui_manager.add_ellipsis_content(f"{ui_manager.get_offset(-3)}Waiting for this to complete", duration=7.0, interval=0.7, text_color=TextColor.YELLOW)
 ```
