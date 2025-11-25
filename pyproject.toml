@@ -25,7 +25,7 @@ urls = {homepage = "https://github.com/nga-27/terminal-ui-lite"}
 
 dependencies = [
     'colorama',
-    'enhanced_input @ git+https://github.com/nga-27/enhanced-input.git@v0.2.3'
+    'enhanced_input @ git+https://github.com/nga-27/enhanced-input.git@v0.2.4'
 ]
 
 [project.optional-dependencies]

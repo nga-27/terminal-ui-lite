@@ -18,7 +18,7 @@ A light-weight way to have a terminal as a basic UI for servers and non-graphica
 # Installation
 
 ```sh
-pip install terminal_ui_lite @ git+ssh://git@github.com/nga-27/terminal-ui-lite.git@v0.3.2
+pip install terminal_ui_lite @ git+https://github.com/nga-27/terminal-ui-lite.git@v0.3.3
 ```
 
 ---

@@ -37,7 +37,9 @@ def start_up_text() -> List[str]:
     return lines
 
 def test():
-    ui_manager = TerminalUILite(start_up_text(), terminal_centering_offset=15)
+    ui_manager = TerminalUILite(start_up_text())
+    ui_manager.add_text_content(f"midpoint should be middle-ish: {ui_manager.terminal_centering_offset}")
+    ui_manager.terminal_centering_offset = 15
     test_callback = TestCallback()
     time.sleep(2)
     colors = [TextColor.RED, TextColor.GREEN, TextColor.BLUE]
@@ -72,7 +74,7 @@ def test():
     time.sleep(2)
     ui_manager.clear_content()
     time.sleep(2)
-    ui_manager.add_input_content("hello\r\nthere\nObi-Wan ", callback_function=test_callback.test_callback,
+    ui_manager.add_input_content("hello\r\nthere\nObi-Wan. Give a password: ", callback_function=test_callback.test_callback,
                                  password_mask="*")
     test_callback.wait_until_data()
     ui_manager.add_text_content(test_callback.print_data())
@@ -83,6 +85,9 @@ def test():
     ui_manager.add_text_content("Immediately after!", text_color=TextColor.GREEN)
     time.sleep(12)
     print(f"Offset is: {ui_manager.terminal_centering_offset} (should be 15)")
+    custom_offset = ui_manager.terminal_centering_offset - 10
+    ui_manager.terminal_centering_offset = custom_offset
+    print(f"Offset is: {ui_manager.terminal_centering_offset} (should be 5)")
 
 
 

@@ -33,7 +33,7 @@ class TerminalUILite:
     terminal_centering_offset: int
 
     def __init__(self, ascii_base_render: Union[List[str], Callable[[], List[str]]],
-                 terminal_centering_offset: int = 0):
+                 terminal_centering_offset: Union[int, None] = None):
         self.__queue = Queue()
         self.__thread = Thread(target=self.__running_view, args=(self.__queue,))
         self.__base_lines = ascii_base_render
@@ -45,6 +45,8 @@ class TerminalUILite:
         self.__thread.start()
         self.__input_handler = EnhancedInput().input
         self.terminal_centering_offset = terminal_centering_offset
+        if terminal_centering_offset is None:
+            self.terminal_centering_offset = os.get_terminal_size().columns // 2
 
     def __running_view(self, queue: Queue):
         """ loads content and runs the terminal view """
