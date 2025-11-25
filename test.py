@@ -37,7 +37,7 @@ def start_up_text() -> List[str]:
     return lines
 
 def test():
-    ui_manager = TerminalUILite(start_up_text())
+    ui_manager = TerminalUILite(start_up_text(), terminal_centering_offset=15)
     test_callback = TestCallback()
     time.sleep(2)
     colors = [TextColor.RED, TextColor.GREEN, TextColor.BLUE]
@@ -79,9 +79,10 @@ def test():
     time.sleep(2)
     ui_manager.clear_content()
     time.sleep(1)
-    ui_manager.add_ellipsis_content("\t\t\t\t\tWaiting for this to complete", duration=7.0, interval=0.7, text_color=TextColor.YELLOW)
+    ui_manager.add_ellipsis_content(f"{ui_manager.get_offset()}Waiting for this to complete", duration=7.0, interval=0.7, text_color=TextColor.YELLOW)
     ui_manager.add_text_content("Immediately after!", text_color=TextColor.GREEN)
     time.sleep(12)
+    print(f"Offset is: {ui_manager.terminal_centering_offset} (should be 15)")
 
 
 

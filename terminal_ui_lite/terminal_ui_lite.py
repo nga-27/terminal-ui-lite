@@ -30,8 +30,10 @@ class TextColor(Enum):
 class TerminalUILite:
     """ Main class of terminal-ui-lite """
     # pylint: disable=too-many-instance-attributes
+    terminal_centering_offset: int
 
-    def __init__(self, ascii_base_render: Union[List[str], Callable[[], List[str]]]):
+    def __init__(self, ascii_base_render: Union[List[str], Callable[[], List[str]]],
+                 terminal_centering_offset: int = 0):
         self.__queue = Queue()
         self.__thread = Thread(target=self.__running_view, args=(self.__queue,))
         self.__base_lines = ascii_base_render
@@ -42,6 +44,7 @@ class TerminalUILite:
         self.__thread.daemon = True
         self.__thread.start()
         self.__input_handler = EnhancedInput().input
+        self.terminal_centering_offset = terminal_centering_offset
 
     def __running_view(self, queue: Queue):
         """ loads content and runs the terminal view """
@@ -207,3 +210,7 @@ class TerminalUILite:
         number_of_lines = max(0, number_of_lines)
         for _ in range(number_of_lines):
             print("\033[A\033[K", end="")
+
+    def get_offset(self) -> str:
+        """ Adds an spacing offset as a string """
+        return f"{self.terminal_centering_offset * ' '}"
