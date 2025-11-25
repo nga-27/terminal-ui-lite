@@ -96,3 +96,31 @@ ui_manager.add_ellipsis_content("message", duration: float = 5.0, interval: floa
 ```
 
 In future releases, there will be a secondary function provided that can prematurely stop the ellipsis function. This will require a bit of rework, but it will allow the ellipsis function to serve as a true "loading..." type UI component.
+
+## Miscellaneous
+
+### Centering Offset
+
+Starting with `0.3.3`, users can set the optional field `terminal_centering_offset` that can be determined by finding the center character spot of the terminal. By default, this value will be populated with the center column. This can be updated at any point, either with the instantiation or later (whenever). This allows offsets to the middle offset to be calculated:
+
+```python
+# defaults terminal_centering_offset to the middle of the terminal
+ui_manager = TerminalUILite(START_UP_ASCII_STRING)
+
+# sets terminal_centering_offset to hardcoded 10
+ui_manager = TerminalUILite(START_UP_ASCII_STRING, terminal_centering_offset=10)
+
+# defaults terminal_centering_offset to the middle of the terminal, but then sets it to middle minus 10
+ui_manager = TerminalUILite(START_UP_ASCII_STRING)
+custom_start_offset = ui_manager.terminal_centering_offset - 10
+ui_manager.terminal_centering_offset = custom_start_offset
+```
+
+To use this feature, simply call `get_offset()`:
+
+```python
+# sets terminal_centering_offset to hardcoded 10
+ui_manager = TerminalUILite(START_UP_ASCII_STRING, terminal_centering_offset=10)
+# Text will be offset by 10 characters
+ui_manager.add_ellipsis_content(f"{ui_manager.get_offset()}Waiting for this to complete", duration=7.0, interval=0.7, text_color=TextColor.YELLOW)
+```
