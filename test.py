@@ -93,6 +93,18 @@ def test():
     print(f"{ui_manager.get_offset(-2)}-2 offset")
     print(f"{ui_manager.get_offset(-25)}-25 offset")
 
+    time.sleep(3)
+    ui_manager.add_controlled_ellipsis_content("Loading something important", interval=0.5, text_color=TextColor.BLUE)
+    time.sleep(5)
+    ui_manager.stop_controlled_ellipsis()
+    time.sleep(1)
+    ui_manager.add_controlled_ellipsis_content("\tDifferent ending", interval=0.5, text_color=TextColor.MAGENTA,
+                                               end_controlled_message=" all done!")
+    time.sleep(5)
+    ui_manager.stop_controlled_ellipsis()
+    ui_manager.add_text_content("Finished controlled ellipsis", text_color=TextColor.GREEN)
+    time.sleep(3)
+
 
 if __name__ == "__main__":
     test()

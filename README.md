@@ -7,10 +7,11 @@ A light-weight way to have a terminal as a basic UI for servers and non-graphica
 
 - **[Installation](#installation)**
 - **[API Guide](#api-functions)**
-    - [Initialization](#initialization)
-    - [Base Content Types](#base-content-types)
-    - [Content Modification](#content-modification)
-    - [Ellipses](#ellipses-plural-of-ellipsis)
+    - [Initialization](/docs/api_guide.md#initialization)
+    - [Base Content Types](/docs/api_guide.md#base-content-types)
+    - [Content Modification](/docs/api_guide.md#content-modification)
+    - [Ellipses](/docs/api_guide.md#ellipses-plural-of-ellipsis)
+    - [Controlled Ellipses](/docs/api_guide.md#controlled-ellipses-plural-of-ellipsis)
 - **[Usage](#usage)**
 
 ---
@@ -18,7 +19,7 @@ A light-weight way to have a terminal as a basic UI for servers and non-graphica
 # Installation
 
 ```sh
-pip install terminal_ui_lite @ git+https://github.com/nga-27/terminal-ui-lite.git@v0.3.3
+pip install terminal_ui_lite @ git+https://github.com/nga-27/terminal-ui-lite.git@v0.3.5
 ```
 
 ---

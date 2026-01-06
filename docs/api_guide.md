@@ -97,6 +97,16 @@ ui_manager.add_ellipsis_content("message", duration: float = 5.0, interval: floa
 
 In future releases, there will be a secondary function provided that can prematurely stop the ellipsis function. This will require a bit of rework, but it will allow the ellipsis function to serve as a true "loading..." type UI component.
 
+## Controlled Ellipses (plural of 'ellipsis')
+
+Similar to **[Ellipses](#ellipses-plural-of-ellipsis)** above, we have the option to create ellipses for an undetermined amount of time that can be stopped on a different function call. This is particularly handy when it comes to processing something that will vary in time (vs. straight ellipses above, where this goes for a fixed amount of periods).
+
+In doing so, we have `add_controlled_ellipsis_content()`, which takes in the input of `content` (the initial message), `interval` (how fast the ellipsis is populated), `text_color` (of type `TextColor` that is part of this library), and `end_controlled_message` (the message that is appended to the starting content at the end of the time period).
+
+To stop the ellipsis, call the `stop_controlled_ellipsis()` function with no input arguments. When doing so, this will remove any added ellipses and append the `end_controlled_message` data, which defaults to `"... done."`.
+
+The advantage of this method over the original is that this can be run for an undetermined amount of time. The function will continue to print ellipses but will restart after 3 periods are placed. This will give the user the knowledge that things are still processing / occurring but will not run out of terminal width space for something taking a long time.
+
 ## Miscellaneous
 
 ### Centering Offset

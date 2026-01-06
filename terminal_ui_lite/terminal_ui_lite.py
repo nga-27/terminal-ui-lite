@@ -1,7 +1,6 @@
 """ Main UI Module """
 import os
 import time
-from enum import Enum
 from typing import Union, Callable, List, Dict, Any
 from threading import Thread
 from queue import Queue
@@ -9,22 +8,12 @@ from queue import Queue
 from enhanced_input import EnhancedInput
 from colorama import just_fix_windows_console
 
-from .models import DEFAULT_TIMEOUT_FOR_INPUTS, QueueObject
+from .models import (
+    DEFAULT_TIMEOUT_FOR_INPUTS, QueueObject, TextColor, MAX_TIME_FOR_CONTROLLED_ELLIPSE
+)
 
 
 just_fix_windows_console()
-
-class TextColor(Enum):
-    """ Color options that are supported """
-    BLACK = "\033[30m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-    WHITE = "\033[37m"
-    RESET = "\033[39m"
 
 
 class TerminalUILite:
@@ -47,10 +36,11 @@ class TerminalUILite:
         self.terminal_centering_offset = terminal_centering_offset
         if terminal_centering_offset is None:
             self.terminal_centering_offset = os.get_terminal_size().columns // 2
+        self.__should_run_controlled_ellipse = False
 
     def __running_view(self, queue: Queue):
         """ loads content and runs the terminal view """
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-statements
         for line in self.__base_lines:
             print(line)
         self.__adjustable_length = 0
@@ -73,6 +63,30 @@ class TerminalUILite:
                         content["content"] += '.'
                         time.sleep(content['interval'])
                     print(" " * (len(content["content"]) + 2), end="\r")
+
+                # Controlled ellipses do not affect the overall printout list
+                elif content['start_controlled_ellipse']:
+                    self.__should_run_controlled_ellipse = True
+                    content["content"] = content["content"].expandtabs(8)
+                    num_periods = 0
+                    printing = content["content"]
+                    start_time = time.time()
+                    while self.__should_run_controlled_ellipse and \
+                        time.time() - start_time < MAX_TIME_FOR_CONTROLLED_ELLIPSE:
+                        print(printing, end="\r")
+                        printing = content["content"]
+                        printing += f"{content['text_color'].value}" + '.' * num_periods + \
+                            ' ' * (3 - num_periods) + f"{TextColor.RESET.value}"
+                        num_periods = (num_periods + 1) % 4
+                        time.sleep(content['interval'])
+                    printing = content["content"] + f"{content['text_color'].value}" + \
+                        content["end_controlled_message"] + f"{TextColor.RESET.value}"
+                    if time.time() - start_time >= MAX_TIME_FOR_CONTROLLED_ELLIPSE:
+                        printing = content["content"] + f"{content['text_color'].value}" + \
+                            "... timed out!" + f"{TextColor.RESET.value}"
+                    print(printing)
+                    self.__adjustable_lines.append(printing)
+                    self.__adjustable_length = len(self.__adjustable_lines)
 
                 else:
                     # Clear the terminal to refresh
@@ -201,6 +215,31 @@ class TerminalUILite:
         queue_able = QueueObject(content=content, ellipsis=True,
                                  interval=interval, duration=duration).__dict__
         self.__queue.put(queue_able)
+
+    def add_controlled_ellipsis_content(self, content: str, interval: float = 1.0,
+                                        text_color: Union[TextColor, None] = None,
+                                        end_controlled_message: str = "... done!"):
+        """Add content that will be like a "loading" screen with additional ellipses
+
+        Args:
+            content (str): message that will have the ellipsis appended to
+            duration (float, optional): duration (in s) of blocking ellipsis view. Defaults to 5.0.
+            interval (float, optional): interval (in s) of printed periods. Defaults to 1.0.
+            text_color (Union[TextColor, None], optional): text color. Defaults to None.
+        """
+        if text_color:
+            content = f"{text_color.value}{content}{TextColor.RESET.value}"
+        # Rejects new lines
+        content = content.replace("\r", "").replace("\n", " ", 1)
+        self.__should_run_controlled_ellipse = True
+        queue_able = QueueObject(content=content, ellipsis=False, interval=interval,
+                                 start_controlled_ellipse=True, text_color=text_color,
+                                 end_controlled_message=end_controlled_message).__dict__
+        self.__queue.put(queue_able)
+
+    def stop_controlled_ellipsis(self) -> None:
+        """ Stops the currently running controlled ellipsis """
+        self.__should_run_controlled_ellipse = False
 
     def clear_content(self) -> None:
         """ Clears the non-base content """
