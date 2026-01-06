@@ -24,13 +24,14 @@ class TerminalUILite:
     def __init__(self, ascii_base_render: Union[List[str], Callable[[], List[str]]],
                  terminal_centering_offset: Union[int, None] = None):
         self.__queue = Queue()
-        self.__thread = Thread(target=self.__running_view, args=(self.__queue,))
+        self.__thread = Thread(
+            target=self.__running_view, args=(self.__queue,), name="TerminalUILite")
+        self.__thread.daemon = True
         self.__base_lines = ascii_base_render
         if not isinstance(ascii_base_render, list):
             self.__base_lines = ascii_base_render()
         self.__adjustable_lines = []
         self.__adjustable_length = 0
-        self.__thread.daemon = True
         self.__thread.start()
         self.__input_handler = EnhancedInput().input
         self.terminal_centering_offset = terminal_centering_offset
