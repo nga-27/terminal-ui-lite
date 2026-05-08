@@ -2,7 +2,7 @@
 import os
 import time
 from typing import Union, Callable, List, Dict, Any
-from threading import Thread
+from threading import Thread, Event
 from queue import Queue
 
 from enhanced_input import EnhancedInput
@@ -24,6 +24,7 @@ class TerminalUILite:
     def __init__(self, ascii_base_render: Union[List[str], Callable[[], List[str]]],
                  terminal_centering_offset: Union[int, None] = None):
         self.__queue = Queue()
+        self.__queue_event = Event()
         self.__thread = Thread(
             target=self.__running_view, args=(self.__queue,), name="TerminalUILite")
         self.__thread.daemon = True
@@ -128,7 +129,11 @@ class TerminalUILite:
                             for line in self.__adjustable_lines:
                                 print(line)
                             self.__adjustable_length = len(self.__adjustable_lines)
-            time.sleep(0.1)
+                if queue.empty():
+                    self.__queue_event.clear()
+            else:
+                self.__queue_event.wait(timeout=0.1)
+                self.__queue_event.clear()
 
     def add_text_content(self, content: Any, text_color: Union[TextColor, None] = None) -> None:
         """Adds content to the screen terminal
@@ -149,10 +154,10 @@ class TerminalUILite:
             split_content = content.split('\n')
             for spl in split_content:
                 queue_able = QueueObject(content=spl).__dict__
-                self.__queue.put(queue_able)
+                self.__enqueue(queue_able)
         else:
             queue_able = QueueObject(content=content).__dict__
-            self.__queue.put(queue_able)
+            self.__enqueue(queue_able)
 
     def add_input_content(self, content: str, callback_function: Callable, # pylint: disable=too-many-arguments
                           input_timeout: Union[int, None] = None,
@@ -179,7 +184,7 @@ class TerminalUILite:
         queue_able = QueueObject(content=content, callback=callback_function,
                                  pw_mask=password_mask).__dict__
         queue_able["timeout"] = input_timeout if input_timeout else DEFAULT_TIMEOUT_FOR_INPUTS
-        self.__queue.put(queue_able)
+        self.__enqueue(queue_able)
 
     def update_last_text_content(self, content: str,
                                  text_color: Union[TextColor, None] = None) -> None:
@@ -195,7 +200,7 @@ class TerminalUILite:
         # Rejects new lines
         content = content.replace("\r", "").replace("\n", " ")
         queue_able = QueueObject(content=content, only_last=True).__dict__
-        self.__queue.put(queue_able)
+        self.__enqueue(queue_able)
 
     def add_ellipsis_content(self, content: str, duration: float = 5.0, interval: float = 1.0,
                              text_color: Union[TextColor, None] = None):
@@ -215,7 +220,7 @@ class TerminalUILite:
         content = content.replace("\r", "").replace("\n", " ", 1)
         queue_able = QueueObject(content=content, ellipsis=True,
                                  interval=interval, duration=duration).__dict__
-        self.__queue.put(queue_able)
+        self.__enqueue(queue_able)
 
     def add_controlled_ellipsis_content(self, content: str, interval: float = 1.0,
                                         text_color: Union[TextColor, None] = None,
@@ -236,16 +241,20 @@ class TerminalUILite:
         queue_able = QueueObject(content=content, ellipsis=False, interval=interval,
                                  start_controlled_ellipse=True, text_color=text_color,
                                  end_controlled_message=end_controlled_message).__dict__
-        self.__queue.put(queue_able)
+        self.__enqueue(queue_able)
 
     def stop_controlled_ellipsis(self) -> None:
         """ Stops the currently running controlled ellipsis """
         self.__should_run_controlled_ellipse = False
 
+    def _TerminalUILite__enqueue(self, queue_obj: Dict[str, Any]) -> None:
+        self.__queue.put(queue_obj)
+        self.__queue_event.set()
+
     def clear_content(self) -> None:
         """ Clears the non-base content """
-        self.__queue.put(QueueObject().__dict__)
-        self.__queue.put(QueueObject(content="").__dict__)
+        self.__enqueue(QueueObject().__dict__)
+        self.__enqueue(QueueObject(content="").__dict__)
 
     def clear_print_lines(self, number_of_lines: int) -> None:
         """ Erases 'number_of_lines' from the screen, useful when prints crowd terminal view """
