@@ -247,10 +247,6 @@ class TerminalUILite:
         """ Stops the currently running controlled ellipsis """
         self.__should_run_controlled_ellipse = False
 
-    def _TerminalUILite__enqueue(self, queue_obj: Dict[str, Any]) -> None:
-        self.__queue.put(queue_obj)
-        self.__queue_event.set()
-
     def clear_content(self) -> None:
         """ Clears the non-base content """
         self.__enqueue(QueueObject().__dict__)
@@ -271,3 +267,7 @@ class TerminalUILite:
             # Negative additional_offset
             offset_val = 0
         return f"{(offset_val) * ' '}"
+
+    def __enqueue(self, queue_obj: Dict[str, Any]) -> None:
+        self.__queue.put(queue_obj)
+        self.__queue_event.set()
